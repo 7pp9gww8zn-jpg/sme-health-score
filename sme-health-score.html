@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SME Profit Health Score — Malaysia Edition</title>
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --card: #161616;
+    --border: #222;
+    --text: #e8e8e8;
+    --muted: #888;
+    --accent: #6c5ce7;
+    --green: #00b894;
+    --amber: #fdcb6e;
+    --red: #e17055;
+    --green-bg: rgba(0,184,148,0.12);
+    --amber-bg: rgba(253,203,110,0.12);
+    --red-bg: rgba(225,112,85,0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px;
+  }
+  .container {
+    max-width: 720px;
+    width: 100%;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .header .badge {
+    display: inline-block;
+    background: rgba(108,92,231,0.15);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+    letter-spacing: 0.3px;
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .header p {
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  /* Progress bar */
+  .progress-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .progress-track {
+    flex: 1;
+    height: 6px;
+    background: #222;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+  .progress-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    white-space: nowrap;
+    min-width: 60px;
+    text-align: right;
+  }
+
+  /* Card */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .card.hidden { display: none; }
+
+  .question-number {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .dimension-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 10px;
+    background: rgba(108,92,231,0.12);
+    color: var(--accent);
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .card h2 {
+    font-size: 19px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  .card .desc {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 22px;
+    line-height: 1.5;
+  }
+
+  /* Options */
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .option:hover {
+    border-color: #444;
+    background: #1e1e1e;
+  }
+  .option.selected {
+    border-color: var(--accent);
+    background: rgba(108,92,231,0.08);
+  }
+  .option .radio {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 2px solid #444;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .option.selected .radio {
+    border-color: var(--accent);
+  }
+  .option.selected .radio::after {
+    content: '';
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .option .score-hint {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  /* Navigation */
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 24px;
+    gap: 12px;
+  }
+  button {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .btn-prev {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid #333;
+  }
+  .btn-prev:hover:not(:disabled) { border-color: #555; color: var(--text); }
+  .btn-next {
+    background: var(--accent);
+    color: #fff;
+    margin-left: auto;
+  }
+  .btn-next:hover:not(:disabled) { opacity: 0.9; }
+
+  /* Results — Score */
+  .results-score {
+    text-align: center;
+    padding: 32px 0 24px;
+  }
+  .results-score .score-circle {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    border: 3px solid;
+  }
+  .results-score .score-label {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .results-score .score-desc {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .dimension-breakdown {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 24px 0;
+  }
+  .dim-block {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .dim-block .name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 6px;
+  }
+  .dim-block .bar-wrap {
+    height: 4px;
+    background: #222;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .dim-block .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+  .dim-block .score {
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .dim-block .out-of {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .red-flags {
+    margin: 24px 0;
+    padding: 20px;
+    background: var(--red-bg);
+    border: 1px solid rgba(225,112,85,0.25);
+    border-radius: 10px;
+  }
+  .red-flags h3 {
+    font-size: 15px;
+    color: var(--red);
+    margin-bottom: 10px;
+  }
+  .red-flags ul {
+    list-style: none;
+    padding: 0;
+  }
+  .red-flags li {
+    padding: 6px 0;
+    font-size: 14px;
+    line-height: 1.4;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .red-flags li::before {
+    content: '⚠️';
+    flex-shrink: 0;
+  }
+
+  /* Tier-matched CTA box */
+  .cta-box {
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    margin: 24px 0;
+  }
+  .cta-box.green {
+    background: var(--green-bg);
+    border: 1px solid rgba(0,184,148,0.25);
+  }
+  .cta-box.amber {
+    background: var(--amber-bg);
+    border: 1px solid rgba(253,203,110,0.25);
+  }
+  .cta-box.red {
+    background: var(--red-bg);
+    border: 1px solid rgba(225,112,85,0.25);
+  }
+  .cta-box h3 {
+    font-size: 17px;
+    margin-bottom: 4px;
+  }
+  .cta-box .tier-icon {
+    font-size: 32px;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .cta-box p {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .cta-box .cta-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn-cta {
+    padding: 14px 32px;
+    font-size: 15px;
+    border-radius: 10px;
+    color: #fff;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-cta:hover { opacity: 0.9; }
+  .btn-cta.green { background: var(--green); }
+  .btn-cta.amber { background: var(--amber); color: #1a1a1a; }
+  .btn-cta.red { background: var(--red); }
+  .btn-cta.accent { background: var(--accent); }
+  .btn-cta.outline {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+  }
+
+  /* Next-7-day actions (red tier) */
+  .quick-actions {
+    text-align: left;
+    margin: 12px 0;
+  }
+  .quick-actions ol {
+    padding-left: 20px;
+  }
+  .quick-actions li {
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 4px 0;
+    color: var(--text);
+  }
+  .quick-actions li strong {
+    color: var(--accent);
+  }
+
+  /* Scoping form */
+  .form-section {
+    margin: 24px 0;
+  }
+  .form-section h3 {
+    font-size: 17px;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .form-section .form-intro {
+    color: var(--muted);
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+  .form-group {
+    margin-bottom: 16px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .form-group label .optional {
+    font-weight: 400;
+    color: var(--muted);
+  }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 12px 14px;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    transition: border 0.2s;
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .form-group select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    cursor: pointer;
+  }
+  .form-group textarea {
+    min-height: 80px;
+    resize: vertical;
+  }
+  .form-row {
+    display: flex;
+    gap: 16px;
+  }
+  .form-row .form-group {
+    flex: 1;
+  }
+  .form-footer-text {
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+    margin: 12px 0 20px;
+    line-height: 1.5;
+  }
+  .form-footer-text strong { color: var(--accent); }
+  .btn-submit {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-submit:hover { opacity: 0.9; }
+  .btn-submit:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .form-status {
+    text-align: center;
+    padding: 20px;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .form-status.success {
+    color: var(--green);
+  }
+  .form-status.error {
+    color: var(--red);
+  }
+  .form-status.hidden { display: none; }
+
+  .restart-link {
+    text-align: center;
+    margin-top: 16px;
+  }
+  .restart-link button {
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    text-decoration: underline;
+    border: none;
+    cursor: pointer;
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 20px 12px; }
+    .card { padding: 20px; }
+    .header h1 { font-size: 22px; }
+    .dimension-breakdown { grid-template-columns: 1fr; }
+    .nav { flex-wrap: wrap; }
+    .btn-next { width: 100%; }
+    .form-row { flex-direction: column; gap: 0; }
+    .cta-actions { flex-direction: column; }
+    .btn-cta { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="badge">🇲🇾 Malaysia Edition</div>
+    <h1>SME Profit Health Score</h1>
+    <p>A 5-minute self-assessment that reveals hidden profit leaks and shows where your business is bleeding money.</p>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap">
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-label" id="progressLabel">0 / 12</div>
+  </div>
+
+  <!-- Questions -->
+  <div class="card" id="questionCard">
+    <div class="question-number" id="qNum">QUESTION 1</div>
+    <div class="dimension-tag" id="qDim">INVENTORY & OPERATIONS</div>
+    <h2 id="qTitle">Loading...</h2>
+    <div class="desc" id="qDesc"></div>
+    <div class="options" id="qOptions"></div>
+    <div class="nav">
+      <button class="btn-prev" id="prevBtn" disabled>← Back</button>
+      <button class="btn-next" id="nextBtn" disabled>Next →</button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="card hidden" id="resultsCard">
+    <div class="results-score">
+      <div class="score-circle" id="scoreCircle">0</div>
+      <div class="score-label" id="scoreLabel">Health Score</div>
+      <div class="score-desc" id="scoreDesc">out of 36 — let's see what that means</div>
+    </div>
+
+    <div class="dimension-breakdown" id="dimBreakdown"></div>
+
+    <div class="red-flags" id="redFlags">
+      <h3>⚠️ Top Red Flags</h3>
+      <ul id="flagList"></ul>
+    </div>
+
+    <!-- Tier-Matched CTA -->
+    <div id="tierCta"></div>
+
+    <!-- Async Scoping Form (shown for green + amber tiers; optionally revealed in red) -->
+    <div id="scopingSection" class="hidden">
+      <hr style="border-color: #222; margin: 28px 0;">
+      <div class="form-section">
+        <h3>📋 Ready to Fix These Leaks?</h3>
+        <div class="form-intro">
+          Fill in the details below and we'll send you a <strong>fixed quote within 24–48 hours</strong> — no call required.
+          Once you approve, we'll send a payment link and start within 3 days.
+        </div>
+        <form id="scopingForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="f_business">Business name</label>
+              <input type="text" id="f_business" placeholder="e.g. MyRestaurant Sdn Bhd" required>
+            </div>
+            <div class="form-group">
+              <label for="f_stage">Business stage</label>
+              <select id="f_stage" required>
+                <option value="">Select...</option>
+                <option value="startup">Startup (&lt;1 year)</option>
+                <option value="growth">Growth (1–5 years)</option>
+                <option value="established">Established (5+ years)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="f_leaks">Top 2–3 leaks from your score <span class="optional">(pre-filled from your answers)</span></label>
+            <textarea id="f_leaks" rows="3" readonly></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="f_data">What data do you have available?</label>
+            <select id="f_data" required>
+              <option value="">Select what you can share...</option>
+              <option value="pnl">Profit & Loss statement</option>
+              <option value="bank">Bank statements (6+ months)</option>
+              <option value="both">P&L + Bank statements</option>
+              <option value="full">Full accounting (P&L, balance sheet, cash flow)</option>
+              <option value="limited">Limited — I need guidance on what to prepare</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="f_market">Market / location</label>
+            <input type="text" id="f_market" placeholder="e.g. Klang Valley, Malaysia" required>
+          </div>
+
+          <div class="form-group">
+            <label for="f_email">Your email</label>
+            <input type="email" id="f_email" placeholder="you@business.com" required>
+          </div>
+
+          <div class="form-footer-text">
+            <strong>🔒 No calls, no pressure.</strong> We'll review your score and data, then send you a fixed price and scope within 24–48 hours. You decide if it works for you.
+          </div>
+
+          <button type="submit" class="btn-submit" id="submitBtn">📩 Get My Fixed Quote</button>
+          <div id="formStatus" class="form-status hidden"></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="restart-link">
+      <button onclick="restart()">← Retake assessment</button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="text-align: center; margin-top: 32px; font-size: 12px; color: var(--muted);">
+    <p>SME Growth Diagnostics — evidence-based growth for Malaysian businesses.</p>
+    <p style="margin-top: 8px;">
+      <a href="https://www.linkedin.com/in/benjaminliang/" style="color: var(--accent); text-decoration: none;">LinkedIn</a>
+      &nbsp;·&nbsp;
+      <a href="https://www.youtube.com/@smediagnostics" style="color: var(--accent); text-decoration: none;">YouTube</a>
+    </p>
+  </div>
+
+</div>
+
+<script>
+const questions = [
+  {
+    dim: 'Inventory & Operations',
+    q: 'How do you manage your inventory / stock?',
+    d: 'For retail, F&B, or e-commerce — if you\'re in services, think "inventory" as your raw materials or consumables.',
+    options: [
+      { text: 'We eyeball it — reorder when we look low or run out', score: 0 },
+      { text: 'We have a rough system — spreadsheets, manual counts monthly', score: 1 },
+      { text: 'We use basic software but don\'t track turnover ratios', score: 2 },
+      { text: 'We track SKU-level turnover, dead stock, and reorder points', score: 3 },
+    ]
+  },
+  {
+    dim: 'Inventory & Operations',
+    q: 'What percentage of your stock is "dead" (unsold for 90+ days)?',
+    d: 'Approximate is fine. This is the single biggest hidden cost in most retail/F&B businesses.',
+    options: [
+      { text: 'More than 30% — we have a lot of slow-moving stock', score: 0 },
+      { text: 'About 15-30% — we know there\'s dead stock but haven\'t cleared it', score: 1 },
+      { text: 'Less than 15% — we regularly clear slow movers', score: 2 },
+      { text: 'Under 5% — we track turnover and discount proactively', score: 3 },
+    ]
+  },
+  {
+    dim: 'Pricing & Margins',
+    q: 'How do you set your prices?',
+    d: 'Pricing is the fastest lever to profit — most SMEs leave 5-15% on the table without realizing it.',
+    options: [
+      { text: 'Match competitors — we check what others charge and follow', score: 0 },
+      { text: 'Cost-plus — we add a standard markup to cost', score: 1 },
+      { text: 'Value-based — we price based on what the market can bear', score: 2 },
+      { text: 'Dynamic — we review margins per product/category quarterly and adjust', score: 3 },
+    ]
+  },
+  {
+    dim: 'Pricing & Margins',
+    q: 'When was the last time you raised prices?',
+    d: 'If it\'s been more than 12 months, inflation has silently eaten your margin.',
+    options: [
+      { text: 'Never — we\'re afraid of losing customers', score: 0 },
+      { text: 'More than 12 months ago — we absorb cost increases', score: 1 },
+      { text: 'Within the last 6-12 months — we adjust when costs rise', score: 2 },
+      { text: 'Within the last 6 months — we review and adjust proactively', score: 3 },
+    ]
+  },
+  {
+    dim: 'Team & Leverage',
+    q: 'What happens when you take a week off?',
+    d: 'This is the founder-dependency test. The honest answer tells you everything about scalability.',
+    options: [
+      { text: 'Everything slows down or stops — I\'m the bottleneck', score: 0 },
+      { text: 'Some things run, but I get urgent calls daily', score: 1 },
+      { text: 'Most things run — a few decisions wait for me', score: 2 },
+      { text: 'Business runs fine — team handles 95% without me', score: 3 },
+    ]
+  },
+  {
+    dim: 'Team & Leverage',
+    q: 'How much of your time goes to "doing" vs "managing"?',
+    d: 'The ratio of operator-work to manager-work is the hidden growth ceiling.',
+    options: [
+      { text: '90% doing, 10% managing — I\'m in the trenches daily', score: 0 },
+      { text: '70/30 — I still do key operational work myself', score: 1 },
+      { text: '50/50 — split between hands-on work and leading', score: 2 },
+      { text: 'Less than 30% doing — I mostly manage and strategise', score: 3 },
+    ]
+  },
+  {
+    dim: 'Cash Flow',
+    q: 'How predictable is your monthly cash flow?',
+    d: 'Cash flow unpredictability is the #1 cause of SME failure — even profitable businesses go under.',
+    options: [
+      { text: 'Very unpredictable — month-to-month swings of 50%+', score: 0 },
+      { text: 'Somewhat predictable — we know the pattern but it\'s lumpy', score: 1 },
+      { text: 'Fairly predictable — regular income with known seasonal dips', score: 2 },
+      { text: 'Highly predictable — recurring revenue or steady monthly billing', score: 3 },
+    ]
+  },
+  {
+    dim: 'Cash Flow',
+    q: 'Do you have a cash reserve that covers 3+ months of expenses?',
+    d: 'Personal and business cash separate? This is the shock-absorber every SME needs.',
+    options: [
+      { text: 'No — we operate month-to-month with no buffer', score: 0 },
+      { text: 'Less than 1 month — one bad month would be a crisis', score: 1 },
+      { text: '1-3 months — we have some buffer but not full coverage', score: 2 },
+      { text: '3+ months — separate business reserve, fully funded', score: 3 },
+    ]
+  },
+  {
+    dim: 'Cash Flow',
+    q: 'How long do your customers take to pay you?',
+    d: 'For B2B businesses — if you\'re B2C retail, this is less relevant. Pick the closest fit.',
+    options: [
+      { text: '60-120 days — we\'re constantly chasing payments', score: 0 },
+      { text: '30-60 days — standard terms but late payments are common', score: 1 },
+      { text: '15-30 days — most pay on time, some stragglers', score: 2 },
+      { text: 'Under 15 days or instant — we\'ve shortened our terms or get prepayment', score: 3 },
+    ]
+  },
+  {
+    dim: 'Systems & Processes',
+    q: 'Does your business have documented SOPs?',
+    d: 'Systems are what turn a founder-run business into a business that runs itself.',
+    options: [
+      { text: 'No — everything is in the founder\'s head', score: 0 },
+      { text: 'Some key processes are written down but not consistently followed', score: 1 },
+      { text: 'Most processes are documented — we train new staff on them', score: 2 },
+      { text: 'Everything is documented, reviewed quarterly, and followed consistently', score: 3 },
+    ]
+  },
+  {
+    dim: 'Systems & Processes',
+    q: 'What does your "tech stack" look like?',
+    d: 'Not about having fancy tools — about whether tools actually connect to save you time.',
+    options: [
+      { text: 'Mostly manual — paper, WhatsApp notes, scribbles', score: 0 },
+      { text: 'A few disconnected tools — spreadsheet here, basic software there', score: 1 },
+      { text: 'Integrated tools in some areas — e.g. POS + accounting linked', score: 2 },
+      { text: 'Mostly connected — our key systems talk to each other, minimal double-entry', score: 3 },
+    ]
+  },
+  {
+    dim: 'Customer & Revenue',
+    q: 'What percentage of your revenue comes from your top 3 customers?',
+    d: 'Concentration risk is a silent killer — lose one and you\'re in trouble.',
+    options: [
+      { text: 'More than 80% — extremely concentrated, high risk', score: 0 },
+      { text: '50-80% — moderately concentrated, any loss hurts', score: 1 },
+      { text: '20-50% — healthy spread, no single dependency', score: 2 },
+      { text: 'Under 20% — very diversified across many customers', score: 3 },
+    ]
+  }
+];
+
+const totalQuestions = questions.length;
+let current = 0;
+let answers = new Array(totalQuestions).fill(null);
+
+// Store the computed score info for the form
+let lastScoreInfo = null;
+
+function render() {
+  const q = questions[current];
+  document.getElementById('qNum').textContent = `QUESTION ${current + 1}`;
+  document.getElementById('qDim').textContent = q.dim;
+  document.getElementById('qTitle').textContent = q.q;
+  document.getElementById('qDesc').textContent = q.d;
+
+  const optsEl = document.getElementById('qOptions');
+  optsEl.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'option' + (answers[current] === i ? ' selected' : '');
+    div.innerHTML = `
+      <div class="radio"></div>
+      <span>${opt.text}</span>
+      <span class="score-hint">${opt.score === 0 ? '🔴' : opt.score === 1 ? '🟡' : opt.score === 2 ? '🟢' : '💎'}</span>
+    `;
+    div.onclick = () => selectOption(i);
+    optsEl.appendChild(div);
+  });
+
+  document.getElementById('prevBtn').disabled = current === 0;
+  document.getElementById('nextBtn').disabled = answers[current] === null;
+
+  // Progress
+  const answered = answers.filter(a => a !== null).length;
+  const pct = Math.round((answered / totalQuestions) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `${answered} / ${totalQuestions}`;
+
+  // Button text
+  document.getElementById('nextBtn').textContent = current === totalQuestions - 1 ? 'See Results →' : 'Next →';
+}
+
+function selectOption(idx) {
+  answers[current] = idx;
+  const opts = document.querySelectorAll('.option');
+  opts.forEach((el, i) => el.classList.toggle('selected', i === idx));
+  document.getElementById('nextBtn').disabled = false;
+}
+
+document.getElementById('nextBtn').onclick = () => {
+  if (answers[current] === null) return;
+  if (current === totalQuestions - 1) {
+    showResults();
+    return;
+  }
+  current++;
+  render();
+};
+
+document.getElementById('prevBtn').onclick = () => {
+  if (current === 0) return;
+  current--;
+  render();
+};
+
+function getLowestDim(dimScores) {
+  const sorted = Object.entries(dimScores).sort((a, b) => (a[1].total / a[1].max) - (b[1].total / b[1].max));
+  return sorted[0][0];
+}
+
+function getLeakSummary() {
+  const dimScores = {};
+  const dimNames = [...new Set(questions.map(q => q.dim))];
+  dimNames.forEach(d => dimScores[d] = { total: 0, max: 0 });
+
+  questions.forEach((q, i) => {
+    const score = answers[i] !== null ? q.options[answers[i]].score : 0;
+    dimScores[q.dim].total += score;
+    dimScores[q.dim].max += 3;
+  });
+
+  const sorted = Object.entries(dimScores).sort((a, b) => (a[1].total / a[1].max) - (b[1].total / b[1].max));
+  const worstDims = sorted.slice(0, 3).map(([name, data]) =>
+    `${name} (${data.total}/${data.max})`
+  );
+
+  const lowAnswers = [];
+  questions.forEach((q, i) => {
+    if (answers[i] !== null && q.options[answers[i]].score <= 1) {
+      lowAnswers.push(q.q.length > 50 ? q.q.substring(0, 50) + '...' : q.q);
+    }
+  });
+
+  const leakParts = [];
+  leakParts.push('Weakest areas: ' + worstDims.join(', '));
+  if (lowAnswers.length > 0) {
+    leakParts.push('Specific gaps: ' + lowAnswers.slice(0, 3).join('; '));
+  }
+  return leakParts.join('\n');
+}
+
+function showResults() {
+  document.getElementById('questionCard').classList.add('hidden');
+  document.getElementById('resultsCard').classList.remove('hidden');
+
+  // Calculate total
+  let total = 0;
+  const dimScores = {};
+  const dimNames = [...new Set(questions.map(q => q.dim))];
+  dimNames.forEach(d => dimScores[d] = { total: 0, max: 0 });
+
+  questions.forEach((q, i) => {
+    const score = answers[i] !== null ? q.options[answers[i]].score : 0;
+    total += score;
+    dimScores[q.dim].total += score;
+    dimScores[q.dim].max += 3;
+  });
+
+  const maxScore = totalQuestions * 3;
+  const pct = (total / maxScore) * 100;
+  lastScoreInfo = { total, maxScore, pct, dimScores };
+
+  // Score circle
+  const circle = document.getElementById('scoreCircle');
+  circle.textContent = total;
+  let color, label, desc, tier;
+  if (pct >= 75) {
+    tier = 'green';
+    color = 'var(--green)';
+    label = '🟢 Healthy — But Don\'t Get Complacent';
+    desc = 'Your fundamentals are solid. The question is: are you leaving 10-20% on the table through small inefficiencies?';
+  } else if (pct >= 50) {
+    tier = 'amber';
+    color = 'var(--amber)';
+    label = '🟡 Moderate Risk — Action Needed';
+    desc = 'You\'re running but with drag. The typical SME at this level has 3-5 clear profit leaks worth 10-30% of bottom line.';
+  } else {
+    tier = 'red';
+    color = 'var(--red)';
+    label = '🔴 High Risk — Needs Urgent Attention';
+    desc = 'Your business is at risk. Most SMEs at this level are burning founder energy to stay afloat and need structural changes.';
+  }
+  circle.style.borderColor = color;
+  circle.style.color = color;
+  document.getElementById('scoreLabel').textContent = label;
+  document.getElementById('scoreDesc').textContent = `Score: ${total}/${maxScore} — ${desc}`;
+
+  // Dimension breakdown
+  const dimEl = document.getElementById('dimBreakdown');
+  dimEl.innerHTML = '';
+  Object.entries(dimScores).forEach(([name, data]) => {
+    const dPct = (data.total / data.max) * 100;
+    let dColor = 'var(--red)';
+    if (dPct >= 75) dColor = 'var(--green)';
+    else if (dPct >= 50) dColor = 'var(--amber)';
+    const block = document.createElement('div');
+    block.className = 'dim-block';
+    block.innerHTML = `
+      <div class="name">${name}</div>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${dPct}%;background:${dColor}"></div></div>
+      <div class="score">${data.total}<span class="out-of"> / ${data.max}</span></div>
+    `;
+    dimEl.appendChild(block);
+  });
+
+  // Red flags
+  const flags = [];
+  const sorted = Object.entries(dimScores).sort((a, b) => (a[1].total / a[1].max) - (b[1].total / b[1].max));
+  const lowestDim = sorted[0][0];
+  const lowestPct = (sorted[0][1].total / sorted[0][1].max) * 100;
+
+  if (lowestPct < 50) {
+    flags.push(`Your weakest area is <strong>${lowestDim}</strong> (${sorted[0][1].total}/${sorted[0][1].max}). This is likely where your biggest profit leak lives.`);
+  }
+
+  const lowQ = [];
+  questions.forEach((q, i) => {
+    if (answers[i] !== null && q.options[answers[i]].score <= 1) {
+      lowQ.push(q.q.length > 40 ? q.q.substring(0, 40) + '...' : q.q);
+    }
+  });
+  lowQ.slice(0, 3).forEach(text => {
+    flags.push(`You flagged: "${text}" — this is a concrete gap worth investigating.`);
+  });
+
+  const pricingIdx = questions.findIndex(q => q.q.includes('set your prices'));
+  if (pricingIdx >= 0 && answers[pricingIdx] !== null && questions[pricingIdx].options[answers[pricingIdx]].score < 2) {
+    flags.push('Your pricing strategy is reactive. Most Malaysian SMEs can raise prices 5-15% without losing customers — but only if done systematically.');
+  }
+
+  const fdIdx = questions.findIndex(q => q.q.includes('week off'));
+  if (fdIdx >= 0 && answers[fdIdx] !== null && questions[fdIdx].options[answers[fdIdx]].score < 2) {
+    flags.push('You are the bottleneck. The business can\'t scale until you systematise your role — this limits both growth and exit value.');
+  }
+
+  const flagEl = document.getElementById('flagList');
+  flagEl.innerHTML = '';
+  if (flags.length === 0) {
+    flags.push('No major red flags detected — but even healthy businesses typically find 10-20% improvement in a full diagnostic.');
+  }
+  flags.slice(0, 4).forEach(f => {
+    const li = document.createElement('li');
+    li.innerHTML = f;
+    flagEl.appendChild(li);
+  });
+
+  // --- TIER-MATCHED CTA ---
+  renderTierCta(tier, dimScores);
+
+  // --- SCOPING FORM ---
+  const scopingSection = document.getElementById('scopingSection');
+  if (tier === 'red') {
+    scopingSection.classList.add('hidden');
+  } else {
+    scopingSection.classList.remove('hidden');
+    document.getElementById('f_leaks').value = getLeakSummary();
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderTierCta(tier, dimScores) {
+  const container = document.getElementById('tierCta');
+  let html = '';
+
+  if (tier === 'green') {
+    html = `
+      <div class="cta-box green">
+        <span class="tier-icon">🟢</span>
+        <h3>You're Running Well — Here's the 10–20% You're Leaving on the Table</h3>
+        <p>Even healthy businesses leave money on the table. A targeted Growth Audit finds the optimisation opportunities your current systems miss — typically 10–20% bottom-line improvement within 2 weeks.</p>
+        <div class="cta-actions">
+          <a class="btn-cta green" href="https://www.upwork.com/services/product/sme-growth-diagnostics" target="_blank">📊 Growth Audit — Standard ($150)</a>
+          <a class="btn-cta accent" href="#scopingForm">📋 Request Custom Quote</a>
+        </div>
+      </div>
+    `;
+  } else if (tier === 'amber') {
+    html = `
+      <div class="cta-box amber">
+        <span class="tier-icon">🟡</span>
+        <h3>These 3 Dimensions Are Your Leaks — Let's Fix Them</h3>
+        <p>Your score shows clear profit leaks that are dragging down your bottom line. A Growth Audit digs into each weak dimension, quantifies the gap, and gives you a prioritised action plan — no fluff, no consulting-speak.</p>
+        <div class="cta-actions">
+          <a class="btn-cta amber" href="https://www.upwork.com/services/product/sme-growth-diagnostics" target="_blank">📊 Growth Audit — Standard ($150)</a>
+          <a class="btn-cta accent" href="#scopingForm">📋 Request Custom Quote</a>
+        </div>
+      </div>
+    `;
+  } else {
+    const weakestDim = getLowestDim(dimScores);
+    html = `
+      <div class="cta-box red">
+        <span class="tier-icon">🔴</span>
+        <h3>Start Here — 3 Actions You Can Take This Week</h3>
+        <p>No pitch. No sales call. Just 3 things you can do right now to stop the bleeding:</p>
+        <div class="quick-actions">
+          <ol>
+            <li><strong>Stop the ${weakestDim} leak.</strong> Open your last 3 months of records for that area. Identify ONE recurring cost or loss — write down the exact number. That's your baseline.</li>
+            <li><strong>Freeze any new spending</strong> in areas that aren't directly generating revenue for 7 days. You'll be surprised how much is optional.</li>
+            <li><strong>Write down your 3 biggest customer problems</strong> from memory. If you can't name them without looking at reports, that's your #1 system gap. Fix that first.</li>
+          </ol>
+        </div>
+        <p style="margin-top: 16px; font-size: 13px;">When you've done these 3 things, come back and retake the assessment — your score will already look different. 🟡 Ready for the next step? The form below is open when you are.</p>
+        <div class="cta-actions">
+          <button class="btn-cta outline" onclick="document.getElementById('scopingSection').classList.toggle('hidden'); setTimeout(() => document.getElementById('scopingSection').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)">📋 Show Scoping Form (When You're Ready)</button>
+        </div>
+      </div>
+    `;
+  }
+  container.innerHTML = html;
+}
+
+// --- SCOPING FORM HANDLER ---
+document.getElementById('scopingForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const submitBtn = document.getElementById('submitBtn');
+  const statusEl = document.getElementById('formStatus');
+  submitBtn.disabled = true;
+  submitBtn.textContent = '⏳ Sending...';
+  statusEl.className = 'form-status hidden';
+
+  const business = document.getElementById('f_business').value.trim();
+  const stage = document.getElementById('f_stage').value;
+  const leaks = document.getElementById('f_leaks').value;
+  const dataAvail = document.getElementById('f_data').value;
+  const market = document.getElementById('f_market').value.trim();
+  const email = document.getElementById('f_email').value.trim();
+  const scoreStr = lastScoreInfo ? `${lastScoreInfo.total}/${lastScoreInfo.maxScore} (${Math.round(lastScoreInfo.pct)}%)` : 'N/A';
+
+  try {
+    const response = await fetch('https://formsubmit.co/ajax/benjamin@smediagnostics.my', {
+      method: 'POST',
+      headers: { 'Accept': 'application/json' },
+      body: JSON.stringify({
+        _subject: 'SME Health Score — New Lead',
+        _template: 'box',
+        score: scoreStr,
+        business: business,
+        stage: stage,
+        market: market,
+        email: email,
+        data_available: dataAvail,
+        top_leaks: leaks
+      })
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      statusEl.className = 'form-status success';
+      statusEl.textContent = '✅ Sent! We\'ll review your info and send a fixed quote within 24–48 hours. Check your email (including spam).';
+      submitBtn.textContent = '✅ Sent';
+      setTimeout(() => {
+        document.getElementById('scopingForm').reset();
+        submitBtn.disabled = false;
+        submitBtn.textContent = '📩 Get My Fixed Quote';
+      }, 5000);
+    } else {
+      throw new Error('Formsubmit returned non-success');
+    }
+  } catch (err) {
+    statusEl.className = 'form-status error';
+    statusEl.innerHTML = '⚠️ Could not send automatically. Please email us directly at <strong>benjamin@smediagnostics.my</strong> with your score details.';
+    submitBtn.disabled = false;
+    submitBtn.textContent = '📩 Get My Fixed Quote';
+  }
+});
+
+function restart() {
+  answers = new Array(totalQuestions).fill(null);
+  current = 0;
+  lastScoreInfo = null;
+  document.getElementById('resultsCard').classList.add('hidden');
+  document.getElementById('questionCard').classList.remove('hidden');
+  document.getElementById('scopingSection').classList.add('hidden');
+  document.getElementById('formStatus').className = 'form-status hidden';
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('submitBtn').textContent = '📩 Get My Fixed Quote';
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
